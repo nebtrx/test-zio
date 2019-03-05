@@ -14,11 +14,5 @@ scalacOptions ++= Seq(
   "-Ypartial-unification" // allow the compiler to unify type constructors of different arities
 )
 
-resolvers += Resolver.sonatypeRepo("snapshots")
-
-libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-core" % "1.1.0",
-  "org.scalaz" %% "scalaz-zio" % "0.1-SNAPSHOT"
-)
-
-//addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
+libraryDependencies += "org.scalaz" %% "scalaz-zio" % "0.9"
+addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")

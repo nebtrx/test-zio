@@ -1,22 +1,35 @@
 package com.github.nebtrx
 
-import scalaz.zio.{App, IO, Void}
-import scalaz.zio.console._
-import scala.concurrent.duration._
-
 import java.io.IOException
 
-object Main extends App {
+import com.github.nebtrx.App.AppEnv
+import scalaz.zio.console._
+import scalaz.zio.internal.{Platform, PlatformLive}
+import scalaz.zio.{Runtime, ZIO}
+import com.github.nebtrx.persistence.Persistence
 
-  def run(args: List[String]): IO[Void, ExitStatus] =
-    myAppLogic.attempt[Void]
-      .map(_.fold(_ => 1, _ => 0))
-      .map(exitCode => ExitStatus.ExitWhenDone(exitCode, 2.seconds))
+object App {
+  type AppEnv = Console with Persistence
+}
 
-  def myAppLogic: IO[IOException, Unit] =
+trait AppRuntime extends App with Runtime[AppEnv] {
+
+  val Platform: Platform       = PlatformLive.Default
+  val Environment: AppEnv      = new Console.Live with Persistence.Live
+}
+
+object Main extends AppRuntime {
+
+  def program: ZIO[AppEnv, Nothing, Int] =
+    myAppLogic.either.map(_.fold(_ => 1, _ => 0))
+
+  val myAppLogic: ZIO[AppEnv, IOException, Unit] =
     for {
       _ <- putStrLn("Hello! What is your name?")
       n <- getStrLn
-      _ <- putStrLn("Hello, " + n + ", good to meet you!")
+      numbers <- ZIO.accessM[AppEnv, Nothing, List[Int]](_.persistence.getAll)
+      _ <- putStrLn(s"Hello, ${n}, good to meet you! This are the numbers: ${numbers}")
     } yield ()
+
+  unsafeRun(program)
 }
